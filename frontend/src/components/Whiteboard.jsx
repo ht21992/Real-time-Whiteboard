@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { FaSave, FaPaintBrush, FaEraser, FaRegTrashAlt, FaPalette } from 'react-icons/fa';
 
@@ -6,14 +5,13 @@ const Whiteboard = () => {
     const canvasRef = useRef(null);
     const contextRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
-    const [isErasing, setIsErasing] = useState(false);  // To toggle between drawing and erasing
-    const [color, setColor] = useState("#000000");
+    const [isErasing, setIsErasing] = useState(false);
+    const [color, setColor] = useState("#89CFF0");
     const [lineWidth, setLineWidth] = useState(2);
-    const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+    const [backgroundColor, setBackgroundColor] = useState("#FAF9F6");
     const [lastPosition, setLastPosition] = useState({ x: null, y: null });
     const [socket, setSocket] = useState(null);
-    const [drawings, setDrawings] = useState([]);  // To keep track of all the drawings
-    const [selectedTool, setSelectedTool] = useState('draw');  // To track selected tool
+    const [selectedTool, setSelectedTool] = useState('draw');
 
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:8000/ws/whiteboard/");
@@ -25,8 +23,6 @@ const Whiteboard = () => {
                 drawFromServer(data);
             } else if (data.type === "clear") {
                 clearCanvas();
-            } else if (data.type === "state") {
-                setDrawings(data.drawings);  // Restore previous drawings for new users
             }
         };
 
@@ -40,28 +36,14 @@ const Whiteboard = () => {
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        canvas.width = window.innerWidth * 0.8;
-        canvas.height = window.innerHeight * 0.8;
-        canvas.style.border = "1px solid #ddd";
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 60;
         canvas.style.backgroundColor = backgroundColor;
-
         const ctx = canvas.getContext("2d");
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         contextRef.current = ctx;
-
-        // Draw all previous drawings when the component mounts (for User B)
-        drawings.forEach((drawing) => {
-            contextRef.current.strokeStyle = drawing.color;
-            contextRef.current.lineWidth = drawing.lineWidth;
-            contextRef.current.beginPath();
-            contextRef.current.moveTo(drawing.points[0].x, drawing.points[0].y);
-            drawing.points.forEach((point) => {
-                contextRef.current.lineTo(point.x, point.y);
-            });
-            contextRef.current.stroke();
-        });
-    }, [backgroundColor, drawings]);
+    }, [backgroundColor]);
 
     const startDrawing = (e) => {
         const { offsetX, offsetY } = e.nativeEvent;
@@ -75,16 +57,16 @@ const Whiteboard = () => {
                 type: "draw",
                 x: offsetX,
                 y: offsetY,
-                color,
+                color: isErasing ? backgroundColor : color,
                 lineWidth,
                 action: "start"
             }));
         }
     };
 
+
     const draw = (e) => {
         if (!isDrawing) return;
-
         const { offsetX, offsetY } = e.nativeEvent;
         const { x: prevX, y: prevY } = lastPosition;
 
@@ -97,7 +79,7 @@ const Whiteboard = () => {
                     type: "draw",
                     x: offsetX,
                     y: offsetY,
-                    color,
+                    color: isErasing ? backgroundColor : color,
                     lineWidth,
                     action: "drawing"
                 }));
@@ -108,9 +90,7 @@ const Whiteboard = () => {
     };
 
     const stopDrawing = () => {
-        contextRef.current.closePath();
         setIsDrawing(false);
-
         if (socket) {
             socket.send(JSON.stringify({
                 type: "draw",
@@ -121,9 +101,9 @@ const Whiteboard = () => {
 
     const drawFromServer = (data) => {
         if (!contextRef.current) return;
-
         const { x, y, color, lineWidth, action } = data;
-        contextRef.current.strokeStyle = color;
+
+        contextRef.current.strokeStyle = color ;
         contextRef.current.lineWidth = lineWidth;
 
         if (action === "start") {
@@ -137,21 +117,8 @@ const Whiteboard = () => {
         }
     };
 
-    const handleColorChange = (e) => {
-        setColor(e.target.value);
-    };
-
-    const handleLineWidthChange = (e) => {
-        setLineWidth(e.target.value);
-    };
-
-    const handleBackgroundChange = (e) => {
-        setBackgroundColor(e.target.value);
-    };
-
     const clearCanvas = () => {
         contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        setDrawings([]);  // Reset drawings in the state
 
         if (socket) {
             socket.send(JSON.stringify({
@@ -168,100 +135,94 @@ const Whiteboard = () => {
         link.click();
     };
 
-    const startErasing = (e) => {
-        const { offsetX, offsetY } = e.nativeEvent;
-        if (isErasing) {
-            contextRef.current.clearRect(offsetX - 10, offsetY - 10, 20, 20); // Erase around the cursor
-            if (socket) {
-                socket.send(JSON.stringify({
-                    type: "erase",
-                    x: offsetX,
-                    y: offsetY
-                }));
-            }
-        }
-    };
-
     const handleToolSelect = (tool) => {
         setSelectedTool(tool);
-        if (tool === 'eraser') {
-            setIsErasing(true);
-        } else {
-            setIsErasing(false);
-        }
+        setIsErasing(tool === 'eraser');
+        // console.log(isErasing, "Here");
+        // console.log(tool === 'eraser');
+
     };
 
     return (
-        <div style={{ padding: "20px", textAlign: "center" }}>
-            <h2 style={{ fontSize: "32px", marginBottom: "20px" }}>Real-time Whiteboard</h2>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px", gap: '15px' }}>
-                <button
-                    onClick={() => handleToolSelect('draw')}
-                    style={selectedTool === 'draw' ? selectedButtonStyle : buttonStyle}
-                    title="Draw"
-                >
+        <div style={{ position: "relative", height: "100vh" }}>
+            {/* Toolbar */}
+            <div style={toolbarStyle}>
+                <button onClick={() => handleToolSelect('draw')} style={selectedTool === 'draw' ? selectedButtonStyle : buttonStyle}>
                     <FaPaintBrush />
                 </button>
-                <button
-                    onClick={() => handleToolSelect('eraser')}
-                    style={selectedTool === 'eraser' ? selectedButtonStyle : buttonStyle}
-                    title="Eraser"
-                >
+                <button onClick={() => handleToolSelect('eraser')} style={selectedTool === 'eraser' ? selectedButtonStyle : buttonStyle}>
                     <FaEraser />
                 </button>
-                <button onClick={clearCanvas} style={buttonStyle} title="Clear Canvas">
+                <button onClick={clearCanvas} style={buttonStyle}>
                     <FaRegTrashAlt />
                 </button>
-                <button onClick={saveCanvasAsImage} style={buttonStyle} title="Save Image">
+                <button onClick={saveCanvasAsImage} style={buttonStyle}>
                     <FaSave />
                 </button>
-                <input type="color" value={color} onChange={handleColorChange} style={inputStyle} title="Pick Color" />
-                <input type="range" min="1" max="10" value={lineWidth} onChange={handleLineWidthChange} style={inputStyle} title="Line Width" />
-                <input type="color" value={backgroundColor} onChange={handleBackgroundChange} style={inputStyle} title="Background Color" />
+                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={colorPickerStyle} />
+                <input type="range" min="1" max="10" value={lineWidth} onChange={(e) => setLineWidth(e.target.value)} style={sliderStyle} />
+                <input type="color" value={backgroundColor}  onChange={(e) => setBackgroundColor(e.target.value)} style={colorPickerStyle} />
             </div>
+
+            {/* Canvas */}
             <canvas
                 ref={canvasRef}
                 onMouseDown={startDrawing}
                 onMouseMove={(e) => {
                     draw(e);
-                    startErasing(e);  // Erase when moving with the eraser
                 }}
                 onMouseUp={stopDrawing}
                 onMouseOut={stopDrawing}
-                style={{ border: "1px solid #ddd", cursor: "crosshair", backgroundColor: backgroundColor, display: "block", margin: "0 auto" }}
+                style={canvasStyle}
             />
         </div>
     );
 };
 
+const toolbarStyle = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#2c3e50",
+    padding: "10px",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    zIndex: 1000,
+};
+
 const buttonStyle = {
-    background: "#f0f0f0",
+    background: "transparent",
     border: "none",
     padding: "10px",
-    borderRadius: "5px",
-    cursor: "pointer",
+    margin: "0 10px",
     fontSize: "20px",
-    transition: "background 0.3s",
-    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)"
+    color: "#ecf0f1",
+    cursor: "pointer",
+    transition: "color 0.3s",
 };
 
 const selectedButtonStyle = {
-    background: "#007bff",
-    color: "#fff",
-    border: "none",
-    padding: "10px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "20px",
-    transition: "background 0.3s",
-    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)"
+    ...buttonStyle,
+    color: "#f39c12",
 };
 
-const inputStyle = {
-    margin: "5px",
-    padding: "5px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
+const colorPickerStyle = {
+    margin: "0 10px",
+    cursor: "pointer",
+    color:"#fff"
+};
+
+const sliderStyle = {
+    margin: "0 10px",
+};
+
+const canvasStyle = {
+    left: 0,
+    width: "100%",
+    height: "calc(100vh - 60px)",
+    cursor: "crosshair",
 };
 
 export default Whiteboard;
