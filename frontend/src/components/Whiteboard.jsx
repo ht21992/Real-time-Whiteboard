@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FaSave, FaPaintBrush, FaEraser, FaRegTrashAlt, FaPalette } from 'react-icons/fa';
+import { FaSave, FaPaintBrush, FaEraser, FaRegTrashAlt } from 'react-icons/fa';
 
 const Whiteboard = () => {
     const canvasRef = useRef(null);
@@ -19,6 +19,14 @@ const Whiteboard = () => {
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
+
+            if (data.type === "state"){
+                // Draw the pervious drawings
+                data.drawings.map((drawing) =>{
+                    drawFromServer(drawing);
+                })
+            }
+
             if (data.type === "draw") {
                 drawFromServer(data);
             } else if (data.type === "clear") {
@@ -31,7 +39,11 @@ const Whiteboard = () => {
 
         setSocket(ws);
 
-        return () => ws.close();
+        return () => {
+            if (ws.readyState === 1) {
+                ws.close();
+            }
+        }
     }, []);
 
     useEffect(() => {
