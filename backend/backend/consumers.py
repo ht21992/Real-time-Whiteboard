@@ -12,9 +12,13 @@ class WhiteboardConsumer(AsyncWebsocketConsumer):
 
         # Retrieve stored drawings from cache and send to the new user
         drawings = cache.get(CACHE_KEY, [])
+
         if drawings:
+            bg_color = cache.get("background_color", "#FAF9F6")  # Default color
             await self.send(
-                text_data=json.dumps({"type": "state", "drawings": drawings})
+                text_data=json.dumps(
+                    {"type": "state", "drawings": drawings, "background": bg_color}
+                )
             )
 
     async def disconnect(self, close_code):
@@ -31,6 +35,19 @@ class WhiteboardConsumer(AsyncWebsocketConsumer):
 
         elif data["type"] == "clear":
             cache.set(CACHE_KEY, [])  # Clear stored drawings
+
+        elif data["type"] == "background":
+            # Store background color in cache
+            cache.set("background_color", data["color"], timeout=60 * 60)
+
+        elif data["type"] == "request_state":
+            drawings = cache.get(CACHE_KEY, [])
+            bg_color = cache.get("background_color", "#FAF9F6")  # Default color
+            await self.send(
+                text_data=json.dumps(
+                    {"type": "state", "drawings": drawings, "background": bg_color}
+                )
+            )
 
         # Broadcast the message to all connected clients
         await self.channel_layer.group_send(

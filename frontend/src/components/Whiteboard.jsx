@@ -15,16 +15,18 @@ const Whiteboard = () => {
 
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:8000/ws/whiteboard/");
-        ws.onopen = () => console.log("Connected to WebSocket");
+        ws.onopen = () => {
+            console.log("Connected to WebSocket");
+            setSocket(ws);
+        };
 
         ws.onmessage = (event) => {
+            if (!canvasRef.current) return; // Ensure canvas is available
             const data = JSON.parse(event.data);
 
             if (data.type === "state"){
-                // Draw the pervious drawings
-                data.drawings.map((drawing) =>{
-                    drawFromServer(drawing);
-                })
+                data.drawings.forEach(drawFromServer); // Draw the pervious drawings
+                setBackgroundColor(data.background);  // Apply saved background
             }
 
             if (data.type === "draw") {
@@ -32,29 +34,36 @@ const Whiteboard = () => {
             } else if (data.type === "clear") {
                 clearCanvas();
             }
+            else if (data.type === "background") {
+                setBackgroundColor(data.color);  // Update background in all clients
+            }
         };
 
         ws.onclose = () => console.log("WebSocket disconnected");
         ws.onerror = (error) => console.error("WebSocket error:", error);
 
-        setSocket(ws);
-
-        return () => {
-            if (ws.readyState === 1) {
-                ws.close();
-            }
-        }
     }, []);
 
     useEffect(() => {
+        if (!canvasRef.current) return; // Prevent running if canvasRef is not ready
+
         const canvas = canvasRef.current;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight - 60;
-        canvas.style.backgroundColor = backgroundColor;
+
+        if (backgroundColor) {
+            canvas.style.backgroundColor = backgroundColor;
+        }
+
         const ctx = canvas.getContext("2d");
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         contextRef.current = ctx;
+
+        // Request stored state only after canvas is set up
+        if (socket) {
+            socket.send(JSON.stringify({ type: "request_state" }));
+        }
     }, [backgroundColor]);
 
     const startDrawing = (e) => {
@@ -140,7 +149,26 @@ const Whiteboard = () => {
     };
 
     const saveCanvasAsImage = () => {
-        const dataURL = canvasRef.current.toDataURL();
+        if (!canvasRef.current) return;
+
+        const canvas = canvasRef.current;
+
+        // Create a temporary canvas to include the background
+        const tempCanvas = document.createElement("canvas");
+        const tempCtx = tempCanvas.getContext("2d");
+
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+
+        // Fill the background color
+        tempCtx.fillStyle = backgroundColor;
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+        // Draw the actual canvas content on top
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // Convert to image
+        const dataURL = tempCanvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = dataURL;
         link.download = "whiteboard.png";
@@ -150,8 +178,6 @@ const Whiteboard = () => {
     const handleToolSelect = (tool) => {
         setSelectedTool(tool);
         setIsErasing(tool === 'eraser');
-        // console.log(isErasing, "Here");
-        // console.log(tool === 'eraser');
 
     };
 
@@ -162,6 +188,7 @@ const Whiteboard = () => {
                 <button onClick={() => handleToolSelect('draw')} style={selectedTool === 'draw' ? selectedButtonStyle : buttonStyle}>
                     <FaPaintBrush />
                 </button>
+
                 <button onClick={() => handleToolSelect('eraser')} style={selectedTool === 'eraser' ? selectedButtonStyle : buttonStyle}>
                     <FaEraser />
                 </button>
@@ -173,7 +200,22 @@ const Whiteboard = () => {
                 </button>
                 <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={colorPickerStyle} />
                 <input type="range" min="1" max="10" value={lineWidth} onChange={(e) => setLineWidth(e.target.value)} style={sliderStyle} />
-                <input type="color" value={backgroundColor}  onChange={(e) => setBackgroundColor(e.target.value)} style={colorPickerStyle} />
+                <input
+                    type="color"
+                    value={backgroundColor}
+                    onChange={(e) => {
+                        const newColor = e.target.value;
+                        setBackgroundColor(newColor);
+
+                        if (socket) {
+                            socket.send(JSON.stringify({
+                                type: "background",
+                                color: newColor
+                            }));
+                        }
+                    }}
+                    style={colorPickerStyle}
+                />
             </div>
 
             {/* Canvas */}
