@@ -7,7 +7,7 @@ export const ClearTool = () => {
   const { clearCanvas } = useWhiteboard();
 
   return (
-    <button onClick={clearCanvas} style={buttonStyle}>
+    <button onClick={clearCanvas} style={buttonStyle} title="Clear Screen">
       <FaRegTrashAlt />
     </button>
   );

@@ -1,15 +1,15 @@
+import React from "react";
 import { useEffect } from "react";
 import { useWhiteboard } from "../../contexts/WhiteboardContext";
-import { FaSave, FaPencilAlt, FaEraser, FaRegTrashAlt } from "react-icons/fa";
+import { FaPaintBrush } from "react-icons/fa";
 import { buttonStyle, selectedButtonStyle } from "../styles/toolbarStyles";
-export const PencilTool = () => {
+
+export const BrushTool = () => {
   const {
     canvasRef,
     isDrawing,
     setIsDrawing,
-    isErasing,
     color,
-    backgroundColor,
     lineWidth,
     socket,
     selectedTool,
@@ -19,18 +19,21 @@ export const PencilTool = () => {
   } = useWhiteboard();
 
   useEffect(() => {
-    // if (!canvasRef.current || selectedTool !== 'pencil') return;
-
-    if (!canvasRef.current || !["pencil", "eraser"].includes(selectedTool))
-      return;
+    if (!canvasRef.current || selectedTool !== "brush") return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.globalAlpha = 0.8; // Slight transparency for a softer brush effect
 
     const startDrawing = (e) => {
       const { offsetX, offsetY } = e;
       ctx.beginPath();
       ctx.moveTo(offsetX, offsetY);
+      ctx.lineWidth = lineWidth * 2; // Slightly thicker for a brush effect
+      ctx.strokeStyle = color;
       setIsDrawing(true);
       setLastPosition({ x: offsetX, y: offsetY });
 
@@ -40,8 +43,8 @@ export const PencilTool = () => {
             type: "draw",
             x: offsetX,
             y: offsetY,
-            color: isErasing ? backgroundColor : color,
-            lineWidth,
+            color,
+            lineWidth: lineWidth * 2,
             action: "start",
           })
         );
@@ -63,9 +66,9 @@ export const PencilTool = () => {
               type: "draw",
               x: offsetX,
               y: offsetY,
-              color: isErasing ? backgroundColor : color,
-              lineWidth,
-              action: "pencil",
+              color,
+              lineWidth: lineWidth * 2,
+              action: "brush",
             })
           );
         }
@@ -101,11 +104,11 @@ export const PencilTool = () => {
 
   return (
     <button
-      onClick={() => handleToolSelect("pencil")}
-      title="Pencil"
-      style={selectedTool === "pencil" ? selectedButtonStyle : buttonStyle}
+      onClick={() => handleToolSelect("brush")}
+      title="Brush"
+      style={selectedTool === "brush" ? selectedButtonStyle : buttonStyle}
     >
-      <FaPencilAlt />
+      <FaPaintBrush />
     </button>
   );
 };

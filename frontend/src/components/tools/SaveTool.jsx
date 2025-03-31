@@ -33,7 +33,11 @@ export const SaveTool = () => {
   };
 
   return (
-    <button onClick={saveCanvasAsImage} style={buttonStyle}>
+    <button
+      onClick={saveCanvasAsImage}
+      style={buttonStyle}
+      title="Save drawing"
+    >
       <FaSave />
     </button>
   );

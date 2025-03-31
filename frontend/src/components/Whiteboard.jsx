@@ -12,7 +12,7 @@ const Whiteboard = () => {
     setBackgroundColor,
     socket,
     setSocket,
-    clearCanvas
+    clearCanvas,
   } = useWhiteboard();
 
   useEffect(() => {
@@ -76,15 +76,41 @@ const Whiteboard = () => {
     if (action === "start") {
       ctx.beginPath();
       ctx.moveTo(x, y);
-    } else if (action === "drawing") {
+    } else if (action === "pencil" || action === "brush") {
       ctx.lineTo(x, y);
+      ctx.stroke();
+    } else if (action === "spray") {
+      const sprayDensity = 10; // Number of dots per stroke
+      for (let i = 0; i < sprayDensity; i++) {
+        const randomX = x + (Math.random() - 0.5) * 10;
+        const randomY = y + (Math.random() - 0.5) * 10;
+        ctx.fillStyle = color;
+        ctx.fillRect(randomX, randomY, 1.5, 1.5);
+      }
+    } else if (action === "line") {
+      ctx.beginPath();
+      ctx.moveTo(data.startX, data.startY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.closePath();
+    } else if (action === "rectangle") {
+      ctx.strokeRect(
+        data.startX,
+        data.startY,
+        x - data.startX,
+        y - data.startY
+      );
+    } else if (action === "circle") {
+      const radius = Math.sqrt(
+        Math.pow(x - data.startX, 2) + Math.pow(y - data.startY, 2)
+      );
+      ctx.beginPath();
+      ctx.arc(data.startX, data.startY, radius, 0, 2 * Math.PI);
       ctx.stroke();
     } else if (action === "stop") {
       ctx.closePath();
     }
   };
-
-
 
   return (
     <div style={{ position: "relative", height: "100vh" }}>
@@ -93,6 +119,5 @@ const Whiteboard = () => {
     </div>
   );
 };
-
 
 export default Whiteboard;

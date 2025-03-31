@@ -10,6 +10,11 @@ import { PencilTool } from "./tools/PencilTool";
 import { EraserTool } from "./tools/EraserTool";
 import { ClearTool } from "./tools/ClearTool";
 import { SaveTool } from "./tools/SaveTool";
+import { BrushTool } from "./tools/BrushTool";
+import { SprayTool } from "./tools/SprayTool";
+import { LineTool } from "./tools/LineTool";
+import { CircleTool } from "./tools/CircleTool";
+import { RectangleTool } from "./tools/RectangleTool";
 
 export const Toolbar = () => {
   const {
@@ -21,8 +26,6 @@ export const Toolbar = () => {
     setBackgroundColor,
     socket,
   } = useWhiteboard();
-
-
 
   const handleBackgroundChange = (e) => {
     const newColor = e.target.value;
@@ -41,9 +44,11 @@ export const Toolbar = () => {
   return (
     <div style={toolbarStyle}>
       <PencilTool />
-      <EraserTool />
-      <ClearTool />
-      <SaveTool />
+      <BrushTool />
+      <SprayTool />
+      <LineTool />
+      <RectangleTool />
+      <CircleTool />
       <input
         type="color"
         value={color}
@@ -64,6 +69,11 @@ export const Toolbar = () => {
         onChange={handleBackgroundChange}
         style={colorPickerStyle}
       />
+      <div style={{ marginLeft: "auto", display: "flex" }}>
+        <EraserTool />
+        <ClearTool />
+        <SaveTool />
+      </div>
     </div>
   );
 };

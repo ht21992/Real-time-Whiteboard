@@ -14,8 +14,6 @@ export const WhiteboardProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [selectedTool, setSelectedTool] = useState("pencil");
 
-
-
   const clearCanvas = () => {
     contextRef.current.clearRect(
       0,
@@ -35,7 +33,7 @@ export const WhiteboardProvider = ({ children }) => {
 
   const handleToolSelect = (tool) => {
     setSelectedTool(tool);
-    setIsErasing(tool === 'eraser');
+    setIsErasing(tool === "eraser");
   };
 
   return (
@@ -60,7 +58,7 @@ export const WhiteboardProvider = ({ children }) => {
         selectedTool,
         setSelectedTool,
         handleToolSelect,
-        clearCanvas
+        clearCanvas,
       }}
     >
       {children}

@@ -8,6 +8,7 @@ export const EraserTool = () => {
   return (
     <button
       onClick={() => handleToolSelect("eraser")}
+      title="Eraser"
       style={selectedTool === "eraser" ? selectedButtonStyle : buttonStyle}
     >
       <FaEraser />
