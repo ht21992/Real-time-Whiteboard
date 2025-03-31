@@ -1,7 +1,10 @@
 import React from "react";
-import { selectedButtonStyle, buttonStyle } from "../../styles/Styles";
+import { useWhiteboard } from "../../contexts/WhiteboardContext";
 import { FaEraser } from "react-icons/fa";
-export const EraserTool = ({ selectedTool, handleToolSelect }) => {
+import { buttonStyle, selectedButtonStyle } from "../styles/toolbarStyles";
+export const EraserTool = () => {
+  const { selectedTool, handleToolSelect } = useWhiteboard();
+
   return (
     <button
       onClick={() => handleToolSelect("eraser")}

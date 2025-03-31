@@ -1,15 +1,13 @@
 import React from "react";
-import Whiteboard from "./components/Whiteboard";
+import { WhiteboardProvider } from "./contexts/WhiteboardContext";
+import Whiteboard from "./components/whiteboard";
 
 const App = () => {
-    return (
-        <div>
-            {/* <h1 style={{marginTop:"100px"}}>Whiteboard</h1> */}
-            <Whiteboard />
-        </div>
-    );
+  return (
+    <WhiteboardProvider>
+      <Whiteboard />
+    </WhiteboardProvider>
+  );
 };
-
-
 
 export default App;
