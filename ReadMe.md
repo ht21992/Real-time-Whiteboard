@@ -13,7 +13,13 @@ This is a web application that enables users to collaborate and draw on a shared
 
 ### Backend
 
-1. Install requirements:
+
+1. Navigate to the backend folder:
+
+```bash
+cd backend
+```
+
 
 1. install requirments.txt using the command below
 
@@ -21,11 +27,7 @@ This is a web application that enables users to collaborate and draw on a shared
 pip install -r requirements.txt
 ```
 
-2. Navigate to the backend folder:
 
-```bash
-cd backend
-```
 
 3. Run the development server:
 
