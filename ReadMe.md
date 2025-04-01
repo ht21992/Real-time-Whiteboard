@@ -21,7 +21,7 @@ cd backend
 ```
 
 
-1. install requirments.txt using the command below
+2. install requirments.txt using the command below
 
 ```bash
 pip install -r requirements.txt
