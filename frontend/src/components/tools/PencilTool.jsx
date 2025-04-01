@@ -19,7 +19,6 @@ export const PencilTool = () => {
   } = useWhiteboard();
 
   useEffect(() => {
-    // if (!canvasRef.current || selectedTool !== 'pencil') return;
 
     if (!canvasRef.current || !["pencil", "eraser"].includes(selectedTool))
       return;
@@ -42,7 +41,7 @@ export const PencilTool = () => {
             y: offsetY,
             color: isErasing ? backgroundColor : color,
             lineWidth,
-            action: "start",
+            action: isErasing ? "eraser_start" : "start",
           })
         );
       }
@@ -54,8 +53,17 @@ export const PencilTool = () => {
       const { x: prevX, y: prevY } = lastPosition;
 
       if (prevX !== null && prevY !== null) {
-        ctx.lineTo(offsetX, offsetY);
-        ctx.stroke();
+        // Handle erasing locally
+        if (isErasing) {
+          const prevComposite = ctx.globalCompositeOperation;
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.lineTo(offsetX, offsetY);
+          ctx.stroke();
+          ctx.globalCompositeOperation = prevComposite;
+        } else {
+          ctx.lineTo(offsetX, offsetY);
+          ctx.stroke();
+        }
 
         if (socket) {
           socket.send(
@@ -65,7 +73,7 @@ export const PencilTool = () => {
               y: offsetY,
               color: isErasing ? backgroundColor : color,
               lineWidth,
-              action: "pencil",
+              action: isErasing ? "eraser_draw" : "pencil",
             })
           );
         }

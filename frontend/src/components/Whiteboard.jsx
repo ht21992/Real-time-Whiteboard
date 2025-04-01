@@ -76,7 +76,18 @@ const Whiteboard = () => {
     if (action === "start") {
       ctx.beginPath();
       ctx.moveTo(x, y);
-    } else if (action === "pencil" || action === "brush") {
+    }else if (action === "eraser_start") {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+    else if (action === "eraser_draw") {
+      const prevComposite = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.globalCompositeOperation = prevComposite;
+    }
+    else if (action === "pencil" || action === "brush") {
       ctx.lineTo(x, y);
       ctx.stroke();
     } else if (action === "spray") {
