@@ -1,4 +1,4 @@
-## Real-time Whiteboard
+## Real-time Paint Board
 
 This is a web application that enables users to collaborate and draw on a shared whiteboard in real time. Users can draw shapes, lines, and erase content, while seeing updates instantly from other connected users. The whiteboard includes tools for selecting drawing colors, background colors, and an eraser, making it a versatile tool for collaborative projects.
 
